@@ -12,8 +12,7 @@ esp32:
   board: esp32dev
 
 logger:
-web_server:
-  port: 80
+
 api:
   reboot_timeout: 50min
   #encryption:
@@ -64,6 +63,12 @@ button:
     on_press:
       - lambda: |-
           id(full_cycle) = 0;
+      - stepper.report_position:
+          id: my_stepper
+          position: 0
+      - number.set:
+          id: number_pos
+          value: 0
 
 sensor:
   - platform: as5600 
@@ -94,14 +99,19 @@ sensor:
     lambda: |-
       return id(full_cycle);
 
+#   - platform: template
+#     update_interval: 100ms
+#     name: "Position MAP"
+#     id: position_map
+#     lambda: |-
+#       return min(9000, max(0, (int)map(id(full_cycle), 0, 2018, 0, 9000)));
   - platform: template
     update_interval: 100ms
     name: "Position MAP"
     id: position_map
     lambda: |-
-      return map(id(full_cycle), 0, 2018, 0, 9000);
-
-         
+      return 9000 - min(9000, max(0, (int)map(id(full_cycle), 0, 2018, 0, 9000)));
+       
   - platform: as5600
     update_interval: 100ms
     name: Position
@@ -125,8 +135,6 @@ sensor:
         - delta: 1
 
 
-
-
 captive_portal:
 
 stepper:
@@ -140,6 +148,7 @@ stepper:
       number: GPIO2
       inverted: true
     max_speed: 1550 steps/s
+
 number:
   - platform: template
     name: Position stepper
@@ -159,47 +168,28 @@ lock:
   - platform: template
     name: Lock
     optimistic: true
+    lambda: |-
+      if (id(position_map).state < 5)
+      {
+        return LOCK_STATE_UNLOCKED;
+      } 
+      else
+      {
+        return LOCK_STATE_LOCKED;
+      }
     lock_action:
-      - number.set:
-          id: number_pos
-          value: 9000
+      - stepper.report_position:
+          id: my_stepper
+          position: !lambda |-
+            return id(position_map).state;
+      - stepper.set_target:
+          id: my_stepper
+          target: 9000
     unlock_action:
-      - number.set:
-          id: number_pos
-          value: 0
-    open_action:
-      - number.set:
-          id: number_pos
-          value: 9000 
-
-# lock:
-#   - platform: template
-#     name: Lock
-# #    optimistic: true
-#     lambda: |-
-#       if (id(position_map).state = 0) {
-
-#         return LOCK_STATE_UNLOCKED;
-#       } else {
-
-#         return LOCK_STATE_LOCKED;
-#       }
-#     lock_action:
-#       - logger.log: INFO, "lock_action is running"
-#       - stepper.report_position:
-#          id: my_stepper
-#          position: !lambda |-
-#           return id(position_map).state;
-#       - button.press: full_cycle_reset
-#       - stepper.set_target:
-#           id: my_stepper
-#           target: 9000
-#     unlock_action:
-#       - logger.log: INFO, "unlock_action is running"
-#       - stepper.report_position:
-#          id: my_stepper
-#          position: !lambda |-
-#           return id(position_map).state;
-#       - stepper.set_target:
-#           id: my_stepper
-#           target: 0
+      - stepper.report_position:
+          id: my_stepper
+          position: !lambda |-
+            return id(position_map).state;
+      - stepper.set_target:
+          id: my_stepper
+          target: 0
