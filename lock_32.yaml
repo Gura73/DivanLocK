@@ -5,13 +5,13 @@ substitutions:
   device_name_wifi: testlock32
 
 #pinout_mapping ESP32
- i2c_sda_pin:                GPIO21            # Пин sda для работы с шиной I2C магнитного энкодера AS560 
- i2c_scl_pin:                GPIO22            # Пин scl для работы с шиной I2C магнитного энкодера AS560
- as5600_dir_pin:             GPIO23            # Пин dir магнитного энкодера AS5600 
+  i2c_sda_pin:                GPIO21            # Пин sda для работы с шиной I2C магнитного энкодера AS560 
+  i2c_scl_pin:                GPIO22            # Пин scl для работы с шиной I2C магнитного энкодера AS560
+  as5600_dir_pin:             GPIO23            # Пин dir магнитного энкодера AS5600 
  
- a4988_step_pin:             GPIO14            # Пин step драйвера шагового двигателя a4988 (TMC2209 V3.0)
- a4988_dir_pin:              GPIO12            # Пин dir  драйвера  шагового двигателя a4988 (TMC2209 V3.0)
- a4988_sleep_pin:            GPIO4             # Пин sleep драйвера шагового двигателя a4988 (TMC2209 V3.0)
+  a4988_step_pin:             GPIO14            # Пин step драйвера шагового двигателя a4988 (TMC2209 V3.0)
+  a4988_dir_pin:              GPIO12            # Пин dir  драйвера  шагового двигателя a4988 (TMC2209 V3.0)
+  a4988_sleep_pin:            GPIO4             # Пин sleep драйвера шагового двигателя a4988 (TMC2209 V3.0)
 
 esphome:
   name: ${device_name}
