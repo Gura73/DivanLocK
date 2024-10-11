@@ -671,3 +671,10 @@ script: #режим светодиода в зависимости от замк
             - globals.set:
                 id: press_button_out
                 value: "false"
+
+switch: # выход на управление брелком замка  
+  - platform: gpio
+    pin: GPIO27
+    inverted: true
+    id: gate  
+    name: "Switch gate close"
