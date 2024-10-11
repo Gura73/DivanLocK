@@ -445,7 +445,7 @@ binary_sensor:
       - delayed_on: 200ms
       - delayed_off: 500ms
     pin:
-      number: 34
+      number: 32
       mode: INPUT_PULLUP
     on_state: 
       then:
