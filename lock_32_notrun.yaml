@@ -385,6 +385,33 @@ sensor:
             speed: 0
             color: PURPLE
             count: 0
+
+# ----------------------------  
+  - platform: template # сенсор удачного распознавания пальца
+    name: success_scanned
+    id: success_scanned
+    icon: mdi:line-scan
+    on_state:
+      then:
+        - delay: 5 s
+        - binary_sensor.template.publish:
+            id: success_scanned
+            state: OFF
+  # - platform: template # звонок
+  #   name: zvonok
+  #   id: zvonok
+  #   icon: mdi:bell-ring
+  #   on_state:
+  #     then:
+  #       - delay: 5 s
+  #       - binary_sensor.template.publish:
+  #           id: zvonok
+  #           state: OFF
+ 
+  - platform: status
+    name: "${device_name}_status"
+# ------------------
+binary_sensor:            
   - platform: gpio # сенсор прикосновения к сканеру
     filters:
       - delayed_on: 10ms
@@ -475,31 +502,6 @@ sensor:
               - script.execute: locking_door_button
               - dfplayer.play_mp3:
                   file: 8 
-# ----------------------------  
-  - platform: template # сенсор удачного распознавания пальца
-    name: success_scanned
-    id: success_scanned
-    icon: mdi:line-scan
-    on_state:
-      then:
-        - delay: 5 s
-        - binary_sensor.template.publish:
-            id: success_scanned
-            state: OFF
-  # - platform: template # звонок
-  #   name: zvonok
-  #   id: zvonok
-  #   icon: mdi:bell-ring
-  #   on_state:
-  #     then:
-  #       - delay: 5 s
-  #       - binary_sensor.template.publish:
-  #           id: zvonok
-  #           state: OFF
- 
-  - platform: status
-    name: "${device_name}_status"
-# ------------------
   # - platform: gpio
   #   pin: 
   #     number: GPIO27
