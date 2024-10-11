@@ -87,66 +87,6 @@ button:
       - lambda: |-
           id(full_cycle) = 0;
 
-sensor:
-  - platform: as5600 
-    update_interval: 100ms 
-    name: Angle 
-    id: angle
-    unit_of_measurement: ° 
-    accuracy_decimals: 0
-    icon: mdi:rotate-right 
-    out_of_range_mode: nan 
-    filters: 
-      - delta: 1 
-      - lambda:  
-          uint16_t deg = (uint16_t)floor(x * as5600::RAW_TO_DEGREES * id(my_as5600).get_range_scale()); 
-          return deg % 360;
-    on_value:
-      then:
-        - lambda: |-
-            if (((id(prev_angle) > 310 && x < 50) || (id(prev_angle) < x)) && !(id(prev_angle) < 50 && x > 310))
-              id(full_cycle) += (id(prev_angle) > x ? 359 - id(prev_angle) + x : x - id(prev_angle));
-            else if ((id(prev_angle) < 50 && x > 310) || (id(prev_angle) > x))
-              id(full_cycle) -= (id(prev_angle) < x ? 359 - x + id(prev_angle) : id(prev_angle) - x);
-            id(prev_angle) = x;
-
-  - platform: template
-    update_interval: 100ms
-    name: "Full cycle"
-    lambda: |-
-      return id(full_cycle);
-
-  - platform: template
-    update_interval: 100ms
-    name: "Position MAP"
-    id: position_map
-    lambda: |-
-      return 9000 - min(9000, max(0, (int)remap(id(full_cycle), 0, 2018, 0, 9000)));
-
-#===============================================================================    
-         
-  - platform: as5600
-    update_interval: 100ms
-    name: Position
-    filters:
-      - delta: 1
-    raw_position:
-      name: Raw Position
-      filters:
-        - delta: 1
-    gain:
-      name: Gain
-      filters:
-        - delta: 1
-    magnitude:
-      name: Magnitude
-      filters:
-        - delta: 1
-    status:
-      name: Status
-      filters:
-        - delta: 1
-
 #=============================================================================== 
 captive_portal:
 stepper:
@@ -390,6 +330,68 @@ fingerprint_grow:
     - delay: 2s
     - script.execute: breathing_light
 #===============================================================================
+sensor:
+  - platform: as5600 
+    update_interval: 100ms 
+    name: Angle 
+    id: angle
+    unit_of_measurement: ° 
+    accuracy_decimals: 0
+    icon: mdi:rotate-right 
+    out_of_range_mode: nan 
+    filters: 
+      - delta: 1 
+      - lambda:  
+          uint16_t deg = (uint16_t)floor(x * as5600::RAW_TO_DEGREES * id(my_as5600).get_range_scale()); 
+          return deg % 360;
+    on_value:
+      then:
+        - lambda: |-
+            if (((id(prev_angle) > 310 && x < 50) || (id(prev_angle) < x)) && !(id(prev_angle) < 50 && x > 310))
+              id(full_cycle) += (id(prev_angle) > x ? 359 - id(prev_angle) + x : x - id(prev_angle));
+            else if ((id(prev_angle) < 50 && x > 310) || (id(prev_angle) > x))
+              id(full_cycle) -= (id(prev_angle) < x ? 359 - x + id(prev_angle) : id(prev_angle) - x);
+            id(prev_angle) = x;
+
+  - platform: template
+    update_interval: 100ms
+    name: "Full cycle"
+    lambda: |-
+      return id(full_cycle);
+
+  - platform: template
+    update_interval: 100ms
+    name: "Position MAP"
+    id: position_map
+    lambda: |-
+      return 9000 - min(9000, max(0, (int)remap(id(full_cycle), 0, 2018, 0, 9000)));
+
+#===============================================================================    
+         
+  - platform: as5600
+    update_interval: 100ms
+    name: Position
+    filters:
+      - delta: 1
+    raw_position:
+      name: Raw Position
+      filters:
+        - delta: 1
+    gain:
+      name: Gain
+      filters:
+        - delta: 1
+    magnitude:
+      name: Magnitude
+      filters:
+        - delta: 1
+    status:
+      name: Status
+      filters:
+        - delta: 1
+
+#===============================================================================    
+
 # sensors fingerprint  
   - platform: fingerprint_grow
     id: fingerprint_enrolling
