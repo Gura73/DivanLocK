@@ -374,6 +374,8 @@ sensor:
 
 #===============================================================================    
 
+binary_sensor:            
+# ----------------------------  
 # sensors fingerprint  
   - platform: fingerprint_grow
     id: fingerprint_enrolling
@@ -385,9 +387,6 @@ sensor:
             speed: 0
             color: PURPLE
             count: 0
-
-# ------------------
-binary_sensor:            
 # ----------------------------  
   - platform: template # сенсор удачного распознавания пальца
     name: success_scanned
