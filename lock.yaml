@@ -19,7 +19,10 @@ api:
    # key: !secret api_password
 
 ota:
+  platform: esphome
   password: !secret ota_password
+
+safe_mode:
   reboot_timeout: 50min
 
 wifi:

@@ -40,9 +40,67 @@ api:
   reboot_timeout: 50min
   #encryption:
    # key: !secret api_password
+#===============================================================================  
+  actions:
+    - action: dfplayer_play_mp3
+      variables:
+        file: int
+      then:
+        - dfplayer.play_mp3:
+            file: !lambda 'return file;'
+    - action: dfplayer_set_volume
+      variables:
+        volume: int
+      then:
+        - dfplayer.set_volume: !lambda 'return volume;'
+    - action: dfplayer_set_eq
+      variables:
+        preset: int
+      then:
+        - dfplayer.set_eq: !lambda 'return static_cast<dfplayer::EqPreset>(preset);'
+    - action: dfplayer_reset
+      then:
+        - dfplayer.reset
+    - action: dfplayer_volume_up
+      then:
+        - dfplayer.volume_up
+
+    - action: dfplayer_volume_down
+      then:
+        - dfplayer.volume_down
+#=============================================================================== 
+# API for fingerprint GROW
+    - action: enroll
+      variables:
+        finger_id: int
+        num_scans: int
+      then:
+        - dfplayer.play_mp3:
+            file: 5
+        - delay: 3s   
+        - dfplayer.play_mp3:
+            file: 3
+        - fingerprint_grow.enroll:
+            finger_id: !lambda 'return finger_id;'
+            num_scans: !lambda 'return num_scans;'
+    - action: cancel_enroll
+      then:
+        - fingerprint_grow.cancel_enroll:
+    - action: delete
+      variables:
+        finger_id: int
+      then:
+        - fingerprint_grow.delete:
+            finger_id: !lambda 'return finger_id;'
+    - action: delete_all
+      then:
+        - fingerprint_grow.delete_all:
 
 ota:
+  platform: esphome
   password: !secret ota_password
+
+safe_mode:
   reboot_timeout: 50min
 
 wifi:
@@ -79,6 +137,11 @@ globals:
     restore_value: yes
     initial_value: '0'
 
+  - id: press_button_out
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 button:
   - platform: template
     name: "Full Cycle Reset"
@@ -86,66 +149,6 @@ button:
     on_press:
       - lambda: |-
           id(full_cycle) = 0;
-
-sensor:
-  - platform: as5600 
-    update_interval: 100ms 
-    name: Angle 
-    id: angle
-    unit_of_measurement: ° 
-    accuracy_decimals: 0
-    icon: mdi:rotate-right 
-    out_of_range_mode: nan 
-    filters: 
-      - delta: 1 
-      - lambda:  
-          uint16_t deg = (uint16_t)floor(x * as5600::RAW_TO_DEGREES * id(my_as5600).get_range_scale()); 
-          return deg % 360;
-    on_value:
-      then:
-        - lambda: |-
-            if (((id(prev_angle) > 310 && x < 50) || (id(prev_angle) < x)) && !(id(prev_angle) < 50 && x > 310))
-              id(full_cycle) += (id(prev_angle) > x ? 359 - id(prev_angle) + x : x - id(prev_angle));
-            else if ((id(prev_angle) < 50 && x > 310) || (id(prev_angle) > x))
-              id(full_cycle) -= (id(prev_angle) < x ? 359 - x + id(prev_angle) : id(prev_angle) - x);
-            id(prev_angle) = x;
-
-  - platform: template
-    update_interval: 100ms
-    name: "Full cycle"
-    lambda: |-
-      return id(full_cycle);
-
-  - platform: template
-    update_interval: 100ms
-    name: "Position MAP"
-    id: position_map
-    lambda: |-
-      return 9000 - min(9000, max(0, (int)remap(id(full_cycle), 0, 2018, 0, 9000)));
-
-#===============================================================================    
-         
-  - platform: as5600
-    update_interval: 100ms
-    name: Position
-    filters:
-      - delta: 1
-    raw_position:
-      name: Raw Position
-      filters:
-        - delta: 1
-    gain:
-      name: Gain
-      filters:
-        - delta: 1
-    magnitude:
-      name: Magnitude
-      filters:
-        - delta: 1
-    status:
-      name: Status
-      filters:
-        - delta: 1
 
 #=============================================================================== 
 captive_portal:
@@ -158,6 +161,7 @@ stepper:
     dir_pin:
       number: $a4988_dir_pin
       inverted: true
+      allow_other_uses: true
     sleep_pin:
       number: $a4988_sleep_pin
       inverted: true
@@ -178,109 +182,11 @@ number:
             target: !lambda return x;            
 
 
-lock:
-  - platform: template
-    name: Lock
-    optimistic: true
-    lambda: |-
-      if (id(position_map).state < 1)
-      {
-        return LOCK_STATE_UNLOCKED;
-      } 
-      else
-      {
-        return LOCK_STATE_LOCKED;
-      }
-    lock_action:
-      - stepper.report_position:
-          id: my_stepper
-          position: !lambda |-
-            return id(position_map).state;
-      - stepper.set_target:
-          id: my_stepper
-          target: 9000
-    unlock_action:
-      - stepper.report_position:
-          id: my_stepper
-          position: !lambda |-
-            return id(position_map).state;
-      - stepper.set_target:
-          id: my_stepper
-          target: 0
-
-#===============================================================================  
-services:
-  - service: dfplayer_play_mp3
-    variables:
-      file: int
-    then:
-      - dfplayer.play_mp3:
-          file: !lambda 'return file;'
-  - service: dfplayer_set_volume
-    variables:
-      volume: int
-    then:
-      - dfplayer.set_volume: !lambda 'return volume;'
-  - service: dfplayer_set_eq
-    variables:
-      preset: int
-    then:
-      - dfplayer.set_eq: !lambda 'return static_cast<dfplayer::EqPreset>(preset);'
-  - service: dfplayer_reset
-    then:
-      - dfplayer.reset
-  - service: dfplayer_volume_up
-    then:
-      - dfplayer.volume_up
-
-  - service: dfplayer_volume_down
-    then:
-      - dfplayer.volume_down
-#=============================================================================== 
-# API for fingerprint GROW
-  - service: enroll
-    variables:
-      finger_id: int
-      num_scans: int
-    then:
-      - dfplayer.play_mp3:
-          file: 5
-      - delay: 3s   
-      - dfplayer.play_mp3:
-          file: 3
-      - fingerprint_grow.enroll:
-          finger_id: !lambda 'return finger_id;'
-          num_scans: !lambda 'return num_scans;'
-  - service: cancel_enroll
-    then:
-      - fingerprint_grow.cancel_enroll:
-  - service: delete
-    variables:
-      finger_id: int
-    then:
-      - fingerprint_grow.delete:
-          finger_id: !lambda 'return finger_id;'
-  - service: delete_all
-    then:
-      - fingerprint_grow.delete_all:
 #=============================================================================== 
 time: # Время берем из Home Assistant
   - platform: homeassistant
     id: homeassistant_time
 #===============================================================================
-#===============================================================================
-# SENSOR
-#===============================================================================
-sensor:
-#-------------------------------------------------------------------------------
-  - platform: uptime # Время работы после последней перезагрузки
-    name: "uptime_${device_name}"
-#-------------------------------------------------------------------------------
-# Optional template text sensor for visual feedback
-text_sensor:
-  - platform: template
-    id: fingerprint_state
-    name: "Fingerprint State"
 
 #=============================================================================== 
 # DFPLAYER
@@ -389,7 +295,88 @@ fingerprint_grow:
         file: 6           
     - delay: 2s
     - script.execute: breathing_light
+
 #===============================================================================
+# SENSOR
+#===============================================================================
+#-------------------------------------------------------------------------------
+# Optional template text sensor for visual feedback
+text_sensor:
+  - platform: template
+    id: fingerprint_state
+    name: "Fingerprint State"
+
+#-------------------------------------------------------------------------------
+
+sensor:
+  - platform: uptime # Время работы после последней перезагрузки
+    name: "uptime_${device_name}"
+
+#===============================================================================
+
+  - platform: as5600 
+    update_interval: 100ms 
+    name: Angle 
+    id: angle
+    unit_of_measurement: ° 
+    accuracy_decimals: 0
+    icon: mdi:rotate-right 
+    out_of_range_mode: nan 
+    filters: 
+      - delta: 1 
+      - lambda:  
+          uint16_t deg = (uint16_t)floor(x * as5600::RAW_TO_DEGREES * id(my_as5600).get_range_scale()); 
+          return deg % 360;
+    on_value:
+      then:
+        - lambda: |-
+            if (((id(prev_angle) > 310 && x < 50) || (id(prev_angle) < x)) && !(id(prev_angle) < 50 && x > 310))
+              id(full_cycle) += (id(prev_angle) > x ? 359 - id(prev_angle) + x : x - id(prev_angle));
+            else if ((id(prev_angle) < 50 && x > 310) || (id(prev_angle) > x))
+              id(full_cycle) -= (id(prev_angle) < x ? 359 - x + id(prev_angle) : id(prev_angle) - x);
+            id(prev_angle) = x;
+
+  - platform: template
+    update_interval: 100ms
+    name: "Full cycle"
+    lambda: |-
+      return id(full_cycle);
+
+  - platform: template
+    update_interval: 100ms
+    name: "Position MAP"
+    id: position_map
+    lambda: |-
+      return 9000 - min(9000, max(0, (int)remap(id(full_cycle), 0, 2018, 0, 9000)));
+
+#===============================================================================    
+         
+  - platform: as5600
+    update_interval: 100ms
+    name: Position
+    filters:
+      - delta: 1
+    raw_position:
+      name: Raw Position
+      filters:
+        - delta: 1
+    gain:
+      name: Gain
+      filters:
+        - delta: 1
+    magnitude:
+      name: Magnitude
+      filters:
+        - delta: 1
+    status:
+      name: Status
+      filters:
+        - delta: 1
+
+#===============================================================================    
+
+binary_sensor:            
+# ----------------------------  
 # sensors fingerprint  
   - platform: fingerprint_grow
     id: fingerprint_enrolling
@@ -401,6 +388,31 @@ fingerprint_grow:
             speed: 0
             color: PURPLE
             count: 0
+# ----------------------------  
+  - platform: template # сенсор удачного распознавания пальца
+    name: success_scanned
+    id: success_scanned
+    icon: mdi:line-scan
+    on_state:
+      then:
+        - delay: 5 s
+        - binary_sensor.template.publish:
+            id: success_scanned
+            state: OFF
+  # - platform: template # звонок
+  #   name: zvonok
+  #   id: zvonok
+  #   icon: mdi:bell-ring
+  #   on_state:
+  #     then:
+  #       - delay: 5 s
+  #       - binary_sensor.template.publish:
+  #           id: zvonok
+  #           state: OFF
+ 
+  - platform: status
+    name: "${device_name}_status"
+
   - platform: gpio # сенсор прикосновения к сканеру
     filters:
       - delayed_on: 10ms
@@ -434,7 +446,7 @@ fingerprint_grow:
       - delayed_on: 200ms
       - delayed_off: 500ms
     pin:
-      number: 34
+      number: 32
       mode: INPUT_PULLUP
     on_state: 
       then:
@@ -474,7 +486,8 @@ fingerprint_grow:
     #               file: 8                              
   - platform: gpio
     pin: 
-      number: GPIO35
+      number: GPIO33
+      allow_other_uses: true
       mode:
         input: true
         pulldown: true      
@@ -491,31 +504,6 @@ fingerprint_grow:
               - script.execute: locking_door_button
               - dfplayer.play_mp3:
                   file: 8 
-# ----------------------------  
-  - platform: template # сенсор удачного распознавания пальца
-    name: success_scanned
-    id: success_scanned
-    icon: mdi:line-scan
-    on_state:
-      then:
-        - delay: 5 s
-        - binary_sensor.template.publish:
-            id: success_scanned
-            state: OFF
-  # - platform: template # звонок
-  #   name: zvonok
-  #   id: zvonok
-  #   icon: mdi:bell-ring
-  #   on_state:
-  #     then:
-  #       - delay: 5 s
-  #       - binary_sensor.template.publish:
-  #           id: zvonok
-  #           state: OFF
- 
-  - platform: status
-    name: "${device_name}_status"
-# ------------------
   # - platform: gpio
   #   pin: 
   #     number: GPIO27
@@ -539,25 +527,69 @@ fingerprint_grow:
   - platform: gpio
     pin: 
       number: GPIO12
+      allow_other_uses: true
       mode:
         input: true
         pulldown: true      
-    id: button_out_light
-    name: "button_out_light"
+    id: button_out_light_new
+    name: "button_out_light_new"
     filters:
       - delayed_on: 200ms      
     on_state:
       then:
         - if:
             condition:
-              - binary_sensor.is_on: button_out_light
+              - binary_sensor.is_on: button_out_light_new
             then:  
               - script.execute: locking_door_button
               - dfplayer.play_mp3:
                   file: 8 
+
+  - platform: gpio # вход бинарного датчика открытия замка
+    id: Lock_sensor
+    name: "Lock sensor"
+    filters:
+      - delayed_on: 200ms
+    pin:
+      number: 33
+      mode: INPUT_PULLUP
+      allow_other_uses: true
+    on_state: 
+      then:
+        - script.execute: breathing_light_zamok
 # ----------------------------    
 #===============================================================================
-lock: # кнопки открытия/закрытия Gimdow с датчиком замка двери из ХА
+lock:
+  - platform: template
+    name: Lock
+    optimistic: true
+    lambda: |-
+      if (id(position_map).state < 1)
+      {
+        return LOCK_STATE_UNLOCKED;
+      } 
+      else
+      {
+        return LOCK_STATE_LOCKED;
+      }
+    lock_action:
+      - stepper.report_position:
+          id: my_stepper
+          position: !lambda |-
+            return id(position_map).state;
+      - stepper.set_target:
+          id: my_stepper
+          target: 9000
+    unlock_action:
+      - stepper.report_position:
+          id: my_stepper
+          position: !lambda |-
+            return id(position_map).state;
+      - stepper.set_target:
+          id: my_stepper
+          target: 0
+
+# lock: # кнопки открытия/закрытия Gimdow с датчиком замка двери из ХА
   - platform: template
     name: Gimdow
     id: Gimdow
@@ -655,9 +687,38 @@ script: #режим светодиода в зависимости от замк
             - globals.set:
                 id: press_button_out
                 value: "false"
-globals:
-  - id: press_button_out
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
+  - id: breathing_light_zamok #режим светодиода в зависимости от замка двери только для самого замка
+    then:
+      if:
+        condition:
+          - binary_sensor.is_off: Lock_sensor
+        then:
+          - fingerprint_grow.aura_led_control:
+              state: FLASHING
+              speed: 35
+              color: GREEN
+              count: 1
+          - fingerprint_grow.aura_led_control:
+              state: BREATHING
+              speed: 255
+              color: CYAN
+              count: 0
+        else:
+          - fingerprint_grow.aura_led_control:
+              state: FLASHING
+              speed: 35
+              color: GREEN
+              count: 1
+          - fingerprint_grow.aura_led_control:
+              state: BREATHING
+              speed: 85
+              color: CYAN
+              count: 0
+
+switch: # выход на управление брелком замка  
+  - platform: gpio
+    pin: GPIO27
+    inverted: true
+    id: gate  
+    name: "Switch gate close"
