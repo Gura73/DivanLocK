@@ -97,9 +97,11 @@ api:
         - fingerprint_grow.delete_all:
 
 ota:
-  - platform: esphome
-    password: !secret ota_password
-    reboot_timeout: 50min
+  platform: esphome
+  password: !secret ota_password
+
+safe_mode:
+  reboot_timeout: 50min
 
 wifi:
   ssid: !secret wifi_ssid
