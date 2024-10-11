@@ -386,6 +386,8 @@ sensor:
             color: PURPLE
             count: 0
 
+# ------------------
+binary_sensor:            
 # ----------------------------  
   - platform: template # сенсор удачного распознавания пальца
     name: success_scanned
@@ -408,8 +410,6 @@ sensor:
   #           id: zvonok
   #           state: OFF
  
-# ------------------
-binary_sensor:            
   - platform: status
     name: "${device_name}_status"
 
