@@ -157,6 +157,7 @@ stepper:
     id: my_stepper
     step_pin: 
       number: $a4988_step_pin
+      allow_other_uses: true
 #      ignore_strapping_warning: true
     dir_pin:
       number: $a4988_dir_pin
@@ -486,6 +487,7 @@ binary_sensor:
   - platform: gpio
     pin: 
       number: GPIO33
+      allow_other_uses: true
       mode:
         input: true
         pulldown: true      
@@ -525,6 +527,7 @@ binary_sensor:
   - platform: gpio
     pin: 
       number: GPIO12
+      allow_other_uses: true
       mode:
         input: true
         pulldown: true      
@@ -550,6 +553,7 @@ binary_sensor:
     pin:
       number: 33
       mode: INPUT_PULLUP
+      allow_other_uses: true
     on_state: 
       then:
         - script.execute: breathing_light_zamok
