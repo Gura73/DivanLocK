@@ -118,36 +118,6 @@ number:
             target: !lambda return x;            
 
 
-lock:
-  - platform: template
-    name: Lock
-    optimistic: true
-    lambda: |-
-      if (id(position_map).state < 1)
-      {
-        return LOCK_STATE_UNLOCKED;
-      } 
-      else
-      {
-        return LOCK_STATE_LOCKED;
-      }
-    lock_action:
-      - stepper.report_position:
-          id: my_stepper
-          position: !lambda |-
-            return id(position_map).state;
-      - stepper.set_target:
-          id: my_stepper
-          target: 9000
-    unlock_action:
-      - stepper.report_position:
-          id: my_stepper
-          position: !lambda |-
-            return id(position_map).state;
-      - stepper.set_target:
-          id: my_stepper
-          target: 0
-
 #===============================================================================  
 services:
   - service: dfplayer_play_mp3
@@ -563,7 +533,37 @@ sensor:
                   file: 8 
 # ----------------------------    
 #===============================================================================
-lock: # кнопки открытия/закрытия Gimdow с датчиком замка двери из ХА
+lock:
+  - platform: template
+    name: Lock
+    optimistic: true
+    lambda: |-
+      if (id(position_map).state < 1)
+      {
+        return LOCK_STATE_UNLOCKED;
+      } 
+      else
+      {
+        return LOCK_STATE_LOCKED;
+      }
+    lock_action:
+      - stepper.report_position:
+          id: my_stepper
+          position: !lambda |-
+            return id(position_map).state;
+      - stepper.set_target:
+          id: my_stepper
+          target: 9000
+    unlock_action:
+      - stepper.report_position:
+          id: my_stepper
+          position: !lambda |-
+            return id(position_map).state;
+      - stepper.set_target:
+          id: my_stepper
+          target: 0
+
+# lock: # кнопки открытия/закрытия Gimdow с датчиком замка двери из ХА
   - platform: template
     name: Gimdow
     id: Gimdow
