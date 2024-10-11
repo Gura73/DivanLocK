@@ -485,7 +485,7 @@ binary_sensor:
     #               file: 8                              
   - platform: gpio
     pin: 
-      number: GPIO35
+      number: GPIO33
       mode:
         input: true
         pulldown: true      
