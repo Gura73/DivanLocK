@@ -40,6 +40,61 @@ api:
   reboot_timeout: 50min
   #encryption:
    # key: !secret api_password
+#===============================================================================  
+  actions:
+    - action: dfplayer_play_mp3
+      variables:
+        file: int
+      then:
+        - dfplayer.play_mp3:
+            file: !lambda 'return file;'
+    - action: dfplayer_set_volume
+      variables:
+        volume: int
+      then:
+        - dfplayer.set_volume: !lambda 'return volume;'
+    - action: dfplayer_set_eq
+      variables:
+        preset: int
+      then:
+        - dfplayer.set_eq: !lambda 'return static_cast<dfplayer::EqPreset>(preset);'
+    - action: dfplayer_reset
+      then:
+        - dfplayer.reset
+    - action: dfplayer_volume_up
+      then:
+        - dfplayer.volume_up
+
+    - action: dfplayer_volume_down
+      then:
+        - dfplayer.volume_down
+#=============================================================================== 
+# API for fingerprint GROW
+    - action: enroll
+      variables:
+        finger_id: int
+        num_scans: int
+      then:
+        - dfplayer.play_mp3:
+            file: 5
+        - delay: 3s   
+        - dfplayer.play_mp3:
+            file: 3
+        - fingerprint_grow.enroll:
+            finger_id: !lambda 'return finger_id;'
+            num_scans: !lambda 'return num_scans;'
+    - action: cancel_enroll
+      then:
+        - fingerprint_grow.cancel_enroll:
+    - action: delete
+      variables:
+        finger_id: int
+      then:
+        - fingerprint_grow.delete:
+            finger_id: !lambda 'return finger_id;'
+    - action: delete_all
+      then:
+        - fingerprint_grow.delete_all:
 
 ota:
   - platform: esphome
@@ -124,61 +179,6 @@ number:
             target: !lambda return x;            
 
 
-#===============================================================================  
-services:
-  - service: dfplayer_play_mp3
-    variables:
-      file: int
-    then:
-      - dfplayer.play_mp3:
-          file: !lambda 'return file;'
-  - service: dfplayer_set_volume
-    variables:
-      volume: int
-    then:
-      - dfplayer.set_volume: !lambda 'return volume;'
-  - service: dfplayer_set_eq
-    variables:
-      preset: int
-    then:
-      - dfplayer.set_eq: !lambda 'return static_cast<dfplayer::EqPreset>(preset);'
-  - service: dfplayer_reset
-    then:
-      - dfplayer.reset
-  - service: dfplayer_volume_up
-    then:
-      - dfplayer.volume_up
-
-  - service: dfplayer_volume_down
-    then:
-      - dfplayer.volume_down
-#=============================================================================== 
-# API for fingerprint GROW
-  - service: enroll
-    variables:
-      finger_id: int
-      num_scans: int
-    then:
-      - dfplayer.play_mp3:
-          file: 5
-      - delay: 3s   
-      - dfplayer.play_mp3:
-          file: 3
-      - fingerprint_grow.enroll:
-          finger_id: !lambda 'return finger_id;'
-          num_scans: !lambda 'return num_scans;'
-  - service: cancel_enroll
-    then:
-      - fingerprint_grow.cancel_enroll:
-  - service: delete
-    variables:
-      finger_id: int
-    then:
-      - fingerprint_grow.delete:
-          finger_id: !lambda 'return finger_id;'
-  - service: delete_all
-    then:
-      - fingerprint_grow.delete_all:
 #=============================================================================== 
 time: # Время берем из Home Assistant
   - platform: homeassistant
