@@ -79,6 +79,11 @@ globals:
     restore_value: yes
     initial_value: '0'
 
+  - id: press_button_out
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 button:
   - platform: template
     name: "Full Cycle Reset"
@@ -661,9 +666,3 @@ script: #режим светодиода в зависимости от замк
             - globals.set:
                 id: press_button_out
                 value: "false"
-globals:
-  - id: press_button_out
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
