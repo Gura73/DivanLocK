@@ -528,19 +528,31 @@ binary_sensor:
       mode:
         input: true
         pulldown: true      
-    id: button_out_light
-    name: "button_out_light"
+    id: button_out_light_new
+    name: "button_out_light_new"
     filters:
       - delayed_on: 200ms      
     on_state:
       then:
         - if:
             condition:
-              - binary_sensor.is_on: button_out_light
+              - binary_sensor.is_on: button_out_light_new
             then:  
               - script.execute: locking_door_button
               - dfplayer.play_mp3:
                   file: 8 
+
+  - platform: gpio # вход бинарного датчика открытия замка
+    id: Lock_sensor
+    name: "Lock sensor"
+    filters:
+      - delayed_on: 200ms
+    pin:
+      number: 33
+      mode: INPUT_PULLUP
+    on_state: 
+      then:
+        - script.execute: breathing_light_zamok
 # ----------------------------    
 #===============================================================================
 lock:
@@ -671,6 +683,34 @@ script: #режим светодиода в зависимости от замк
             - globals.set:
                 id: press_button_out
                 value: "false"
+
+  - id: breathing_light_zamok #режим светодиода в зависимости от замка двери только для самого замка
+    then:
+      if:
+        condition:
+          - binary_sensor.is_off: Lock_sensor
+        then:
+          - fingerprint_grow.aura_led_control:
+              state: FLASHING
+              speed: 35
+              color: GREEN
+              count: 1
+          - fingerprint_grow.aura_led_control:
+              state: BREATHING
+              speed: 255
+              color: CYAN
+              count: 0
+        else:
+          - fingerprint_grow.aura_led_control:
+              state: FLASHING
+              speed: 35
+              color: GREEN
+              count: 1
+          - fingerprint_grow.aura_led_control:
+              state: BREATHING
+              speed: 85
+              color: CYAN
+              count: 0
 
 switch: # выход на управление брелком замка  
   - platform: gpio
