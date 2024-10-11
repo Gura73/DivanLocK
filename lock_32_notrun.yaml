@@ -408,10 +408,11 @@ sensor:
   #           id: zvonok
   #           state: OFF
  
-  - platform: status
-    name: "${device_name}_status"
 # ------------------
 binary_sensor:            
+  - platform: status
+    name: "${device_name}_status"
+
   - platform: gpio # сенсор прикосновения к сканеру
     filters:
       - delayed_on: 10ms
