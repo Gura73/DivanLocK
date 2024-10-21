@@ -203,7 +203,7 @@ dfplayer:
 
 fingerprint_grow:
   sensing_pin: 
-    number: GPIO5
+    number: GPIO18
     allow_other_uses: true
   uart_id: finger_grow 
   on_finger_scan_matched: # палец распознан
