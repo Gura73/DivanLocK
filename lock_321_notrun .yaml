@@ -421,7 +421,7 @@ binary_sensor:
       - delayed_on: 10ms
       - invert:
     pin: 
-      number: GPIO18
+      number: $grow_sensing_pin
       allow_other_uses: true
     id: Finger_touch
     name: "Finger touch"
